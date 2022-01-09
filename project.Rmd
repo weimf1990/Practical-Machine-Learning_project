@@ -1,0 +1,86 @@
+---
+title: "Regression Models_project"
+author: "weimf"
+date: "1/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+This project aims to explore the relationship between a set of variables and miles per gallon (MPG) (outcome). Specifically, I will address the following two questions:  
+1. Is an automatic or manual transmission (am) better for MPG?    
+2. Quantify the MPG difference between automatic and manual transmissions.  
+
+## Executive summary
+This project finds that manual transmission alone seems to be better for MPG than the automatic one. However, after accounting for other factors such as the number of cylinders, gross horsepower, and weight that might also affect the performance of the cars, the transmission type is no longer significant in the multivariate model. Considerations on relevant factors as a whole shall be a more comprehensive way in determining the overall performance of the motors.  
+
+## Descriptive analysis
+```{r cars}
+library(datasets)
+data(mtcars)
+
+#View the dataset 
+head(mtcars, 3)
+
+summary(mtcars$mpg)
+
+#plot
+library(ggplot2)
+mtcars$am <- as.factor(mtcars$am)
+
+plot <- ggplot(aes(x=am, y=mpg), data=mtcars) + geom_boxplot(aes(fill=am))
+plot <- plot + labs(title = "Automatic v.s. Manual Transmission")
+plot <- plot + xlab("Transmission Type")
+plot <- plot + ylab("MPG")
+plot <- plot + labs(fill = "Legend (0=automatic, 1=manual)")
+plot
+
+#Hypothesis Test:
+auto <- mtcars[mtcars$am == "0",]
+manu <- mtcars[mtcars$am == "1",]
+t.test(auto$mpg, manu$mpg)
+```
+The boxplot shows that the manual transmission provides substantially higher gas mileage than the automatics. I further test the hypothesis of whether the difference in means are equal. The test result is significant at 95% and the hypothsis is rejected. That is, the means of gas mileage are different based on the transmission types.  
+
+## Regression analysis
+```{r pressure, echo=FALSE}
+#simple linear model: include only "Transmission" as an independent variable 
+fit1 <- lm(mpg ~ am, data = mtcars)
+summary(fit1)
+
+#Multivariable regression model
+## add "Number of cylinders"
+fit2 <- lm(mpg ~ am + cyl, data = mtcars)
+summary(fit2)
+anova(fit1, fit2)
+
+# add "Number of cylinders" and "Gross horsepower"
+fit3 <- lm(mpg ~ am + cyl + hp, data = mtcars)
+summary(fit3)
+anova(fit1, fit3)
+
+# add "Number of cylinders", "Gross horsepower", and "Weight"
+fit4 <- lm(mpg ~ am + cyl + hp + wt, data = mtcars)
+summary(fit4)
+anova(fit1, fit4)
+
+# add "Number of cylinders", "Gross horsepower", "Weight", and "Engine"
+fit5 <- lm(mpg ~ am + cyl + hp + wt + vs, data = mtcars)
+summary(fit5)
+anova(fit1, fit5)
+anova(fit4, fit5)
+
+```
+The simple linear regression model (model 1) shows that the manual transmissions performs 7.25mpg (Miles/(US) gallon) higher than automatic ones. However, this model explains merely 36% of the MPG performance.  
+I move on by adding other variables that might affect a vehicle’s gas mileage. For example, number of cylinders (cyl), engine gross horsepower (hp), vehicle weight (wt), and the engine shape (vs) into the model. As shown by the results, each of these models is able to explain at least 74% of the outcome, which is better than the simple linear regression model. Based on the anova tests, I would choose the model fit4 (with explanatory variables "Transmission", "Number of cylinders", "Gross horsepower", and "Weight") as the proposed model, although the transmission type is not significant.
+
+## Appendix: Residual plot and diagnostics
+```{r}
+#Scatterplots of the multivariable regression model residuals (model fit4):
+par(mfrow = c(2,2))
+plot(fit4)
+```
+
